@@ -64,7 +64,8 @@ sum_by_taxcode_and_category <- function(pin_table, class_table){
   
   # group, summarize, return.
   group_by(df, tax_code, category) %>% 
-    summarize(mv = sum(mv, na.rm = TRUE), .groups = "drop")
+    summarize(mv = sum(mv, na.rm = TRUE), .groups = "drop") |> 
+    filter(!(mv == 0 & is.na(category)))
 }
 
 # apply function to each pin table + class table combination 
@@ -294,6 +295,9 @@ id_missing_mv <- function(df, nm){
   return(nomatch)
 }
 
+#Per taxextension@willcounty.gov, in 2019 Sauk Village disconnected from Will County but the district still appears as it
+# has some bond debt
+
 exts_and_vals_no_vals <- map2(exts_and_vals, names(exts_and_vals), id_missing_mv)
 
 
@@ -357,7 +361,8 @@ calc_effective_rates <- function(df, nm){
     mutate(eff_rate_res = (ext_res)/(mv_residential + mv_vacant),
            eff_rate_ci = (ext_com + ext_ind)/(mv_commercial + mv_industrial)) %>% 
     # where effective rate is 0/0, rate will be "NaN". Replace these.
-    mutate_all(~replace(., is.nan(.), 0))
+    mutate_all(~replace(., is.nan(.), 0)) |> 
+    select(!starts_with("mv_exempt")) #per EG, exempt category not meaningful
   
   # where table 28 has an extension but no MV, the effective rate is infinite.
   # This could be an issue but is probably not (often the extension is

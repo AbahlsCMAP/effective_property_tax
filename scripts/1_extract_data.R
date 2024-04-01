@@ -104,7 +104,11 @@ pins$cook <- DBI::dbGetQuery(ptaxsim_db_conn, "select pin, class, tax_code_num, 
          class,
          tax_code = tax_code_num,
          eav = av_clerk
-  )
+  ) |> 
+  mutate(class = ifelse(class == "0", "000", class),
+         class = ifelse(class == "192", "190",class))
+  #typo -- need to confirm 192 doesnt exist is future years
+  #https://github.com/ccao-data/ptaxsim/issues/30
 
 dbDisconnect(ptaxsim_db_conn)
 
